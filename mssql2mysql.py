@@ -286,6 +286,7 @@ def single_task(table_name):
                     break
 
             # 释放没有结束的进程
+            time.sleep(1)
             if time_process.is_alive():
                 time_process.terminate()
                 time_process.join()
