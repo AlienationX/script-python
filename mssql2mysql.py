@@ -13,13 +13,16 @@ from multiprocessing import Pool, Process
 
 import sys
 
+# IDLE不是标准输入输出，需要处理一下
+stdi, stdo, stde = sys.stdin, sys.stdout, sys.stderr
 reload(sys)
 sys.setdefaultencoding('utf-8')
+sys.stdin, sys.stdout, sys.stderr = stdi, stdo, stde
 
-program_path = "C:/Python27/Program/"
+program_path = "C:/Python27/Program"
 log_name = "{program_path}/logs/data_sync_{date}.log".format(program_path=program_path, date=datetime.datetime.now().strftime("%Y-%m-%d"))
-# logging.basicConfig(level=logging.INFO, format='%(asctime)s: %(levelname)s %(message)s', filename=log_name)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s: %(levelname)s %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s: %(levelname)s %(message)s', filename=log_name)
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s: %(levelname)s %(message)s')
 
 ######################################################################################################
 _commit_num = 10000
@@ -81,6 +84,8 @@ def db_conn_test():
 
 def get_all_tables():
     sql = "select name from sys.tables where name not in ('SysLogs') order by name"
+    # sql = "select name from sys.tables where name in ('yc_hospital','yc_outpatient') order by name"
+    # sql = "select name from sys.tables where name in ('order_message','sysroles') order by name"
     with TwoDB() as twodb:
         twodb.mssql_cur.execute(sql)
         rows = twodb.mssql_cur.fetchall()
@@ -240,6 +245,7 @@ def time_monitor():
 
 
 def task_main(table_name):
+    """task的返回需要检测，否则函数内部出错导致的结束无法判断???"""
     try:
         create_table(table_name)
         insert_data_batch(table_name)
@@ -279,6 +285,14 @@ def single_task(table_name):
                     logging.error("{} timeout".format(table_name))
                     break
 
+            # 释放没有结束的进程
+            if time_process.is_alive():
+                time_process.terminate()
+                time_process.join()
+            if task_process.is_alive():
+                task_process.terminate()
+                task_process.join()
+
             if result_flag == 1:
                 update_table_log(table_name, s_time, i)
                 result_str = ""
@@ -302,7 +316,7 @@ def create_log_table():
         flag int,
         KEY idx_id (id)
     ) engine=innodb charset=utf8;
-    
+
     create table if not exists data_sync_detail_log (
         id int,
         dt char(10),
@@ -316,8 +330,8 @@ def create_log_table():
     ) engine=innodb charset=utf8;
     """
     with TwoDB() as twodb:
-        twodb.mysql_cur.execute(create_sql)
         logging.info("log table created")
+        twodb.mysql_cur.execute(create_sql)
 
 
 def insert_table_log(table_name):
@@ -389,7 +403,15 @@ if __name__ == "__main__":
     # for table_name in get_all_tables():
     #     # err_table = p.apply_async(func=create_and_insert, args=(table_name,))
     #     # err_table = p.apply_async(func=exec_datax, args=(table_name,))
-    #     # err_table = p.apply_async(func=single_task, args=(table_name,))
+    #     err_table = p.apply_async(func=single_task, args=(table_name,))
+    #
+    #     # 进程池里套多进程（开启守护进程）会报错
+    #     # Traceback (most recent call last):
+    #     #   File "C:\Python27\Program\timeout.py", line 287, in single_task
+    #     #     time_process.start()
+    #     #   File "C:\Python27\lib\multiprocessing\process.py", line 124, in start
+    #     #     'daemonic processes are not allowed to have children'
+    #     # AssertionError: daemonic processes are not allowed to have children
     #     failed_tables.append(err_table.get())
     # p.close()
     # p.join()
