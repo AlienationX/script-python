@@ -406,7 +406,7 @@ if __name__ == "__main__":
     #     # err_table = p.apply_async(func=exec_datax, args=(table_name,))
     #     err_table = p.apply_async(func=single_task, args=(table_name,))
     #
-    #     # 进程池里套多进程（开启守护进程）会报错
+    #     # 进程池里套多进程（开启守护进程）会报错，因为进程池里面的进程默认开启守护进程? 不确定
     #     # Traceback (most recent call last):
     #     #   File "C:\Python27\Program\timeout.py", line 287, in single_task
     #     #     time_process.start()
