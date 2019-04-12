@@ -42,7 +42,7 @@ class TwoDB(object):
             'host': 'localhost',
             'user': 'root',
             'password': 'root',
-            'database': 'sanbengzi',
+            'database': 'pms',
             'port': 3306,
             'charset': 'utf8',
         }
