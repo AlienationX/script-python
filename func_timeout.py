@@ -1,5 +1,5 @@
 # coding=utf-8
-# python 2.7.1
+# python 2.7
 
 # 给函数增加执行时间限制，超时跑出异常，没超时会正常结束任务
 # windows平台无效
