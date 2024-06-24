@@ -38,13 +38,13 @@ def single_task():
     while True:
         time.sleep(1)
         if not task_process.is_alive():
-            print "任务正常结束"
+            print("任务正常结束")
             break
         if not time_process.is_alive():
-            print "任务超时结束"
+            print("任务超时结束")
             break
 
-    print datetime.datetime.now()
+    print(datetime.datetime.now())
 
 
 if __name__ == '__main__':
